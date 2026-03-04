@@ -1,0 +1,7 @@
+id|customer_name|email|purchase_amount|date
+1|John Doe||100.50|2023-01-01
+2||jane@example.com|forty-two|02-01-2023
+|Bob Smith|bob@|null|
+4|Alice||0|99/99/9999
+5|Charlie||-50|
+|Invalid Row Data Without Columns

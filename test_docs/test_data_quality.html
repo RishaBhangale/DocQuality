@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DQ Test - Sales Report Q1 2026</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #4a90d9; color: white; }
+    .dq-issue { background-color: #ffe0e0; }
+  </style>
+</head>
+<body>
+  <h1>Sales Report - Q1 2026</h1>
+  <p>Generated on: <span id="report-date">2026-03-04</span></p>
+  <p>Region: <strong>India</strong></p>
+
+  <h2>Transaction Table</h2>
+  <table>
+    <thead>
+      <tr><th>TxnID</th><th>Date</th><th>Customer</th><th>Product</th><th>Qty</th><th>Amount</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>T001</td><td>2026-01-10</td><td>Alice Johnson</td><td>Headphones</td><td>2</td><td>$99.98</td><td>Completed</td></tr>
+      <tr class="dq-issue"><td>T002</td><td>2026-13-45</td><td></td><td>USB Hub</td><td>-3</td><td>$NaN</td><td>UNKNOWN</td></tr>
+      <tr><td>T001</td><td>2026-01-10</td><td>Alice Johnson</td><td>Headphones</td><td>2</td><td>$99.98</td><td>Completed</td></tr>
+      <tr class="dq-issue"><td>T004</td><td>2026-02-28</td><td>Bob Smith</td><td></td><td>0</td><td>$0.00</td><td>Pending</td></tr>
+      <tr><td>T005</td><td>2026-03-01</td><td>Carol White</td><td>Keyboard</td><td>1</td><td>$120.00</td><td>Completed</td></tr>
+      <tr class="dq-issue"><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Summary Statistics</h2>
+  <ul>
+    <li>Total Transactions: 6 (including 1 fully empty row)</li>
+    <li>Duplicates: T001 appears twice</li>
+    <li>Invalid dates: T002</li>
+    <li>Missing customer: T002</li>
+    <li>Missing product: T004</li>
+    <li>Negative quantity: T002</li>
+  </ul>
+
+  <footer>
+    <p>Confidential &mdash; For Internal Testing Only</p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,79 @@
+{
+  "dataset": "Employee Records",
+  "generated_at": "2026-03-04T16:51:00+05:30",
+  "records": [
+    {
+      "emp_id": "E001",
+      "name": "Rohit Verma",
+      "dept": "Engineering",
+      "salary": 95000,
+      "email": "rohit.verma@corp.com",
+      "joining_date": "2021-06-01",
+      "active": true
+    },
+    {
+      "emp_id": "E002",
+      "name": null,
+      "dept": "HR",
+      "salary": -1000,
+      "email": "hr_person@corp",
+      "joining_date": "2020-15-03",
+      "active": true
+    },
+    {
+      "emp_id": "E003",
+      "name": "Sneha Das",
+      "dept": "Engineering",
+      "salary": "eighty thousand",
+      "email": "sneha.das@corp.com",
+      "joining_date": "2022-11-14",
+      "active": null
+    },
+    {
+      "emp_id": "E001",
+      "name": "Rohit Verma",
+      "dept": "Engineering",
+      "salary": 95000,
+      "email": "rohit.verma@corp.com",
+      "joining_date": "2021-06-01",
+      "active": true
+    },
+    {
+      "emp_id": "E005",
+      "name": "   ",
+      "dept": "",
+      "salary": null,
+      "email": "noreply@@corp.com",
+      "joining_date": "",
+      "active": false
+    },
+    {
+      "emp_id": "E006",
+      "name": "Tanya Iyer",
+      "dept": "Finance",
+      "salary": 78000,
+      "email": "tanya.iyer@corp.com",
+      "joining_date": "2023-04-10",
+      "active": true
+    },
+    {
+      "emp_id": "E007",
+      "name": "Umesh Rao",
+      "dept": "UNKNOWN_DEPT",
+      "salary": 9999999,
+      "email": "umesh@corp.com",
+      "joining_date": "2024-01-01",
+      "active": "yes"
+    }
+  ],
+  "metadata": {
+    "total_records": 7,
+    "known_issues": [
+      "duplicate emp_id E001",
+      "null name E002",
+      "invalid salary type E003",
+      "invalid email E005",
+      "whitespace-only name E005"
+    ]
+  }
+}

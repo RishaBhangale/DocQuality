@@ -1,0 +1,17 @@
+{
+    "invoice_number": null,
+    "date": "2024/99/99",
+    "vendor": 12345,
+    "items": {
+        "0": "Laptop",
+        "1": "Mouse"
+    },
+    "total": "one thousand dollars",
+    "tax": null,
+    "status": "UNPAID_BUT_MAYBE",
+    "customer_info": {
+        "name": "",
+        "address": null,
+        "email": "not-an-email"
+    }
+}

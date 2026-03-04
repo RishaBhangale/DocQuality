@@ -1,0 +1,11 @@
+CustomerID,Name,Email,Age,JoinDate,Spend_USD,Country,Status
+C001,Alice Johnson,alice.johnson@example.com,29,2023-01-15,1500.50,India,Active
+C002,Bob Smith,bobsmith@@wrongemail,abc,2023-13-45,NaN,,Active
+C003,,carol@example.com,34,2023-07-22,200.00,India,
+C001,Alice Johnson,alice.johnson@example.com,29,2023-01-15,1500.50,India,Active
+C005,Eve   Ray,eve.ray@example.com,-5,2024/03/10,99999999,IN,ACTV
+C006,Frank N,frank@test.io,52,2025-11-01,750.25,USA,Inactive
+C007,Gita Sharma,gitasharma#example.com,41,2025-06-30,300.00,India,Active
+C008,Hans Müller,hans@example.de,,2025-08-19,0,Germany,Active
+C009,Isha Patel,isha.patel@example.com,27,2025-09-05,850.00,India,Active
+C010,,,,,,,

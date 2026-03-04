@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <customer id="101" active="true">
+        <name>Acme Corp
+        <!-- Missing closing name tag, missing email tag entirely -->
+        <address state="CA">
+            <street>123 Main St
+            <city>Techville</city>
+            <!-- Missing closing street tag -->
+    </customer>
+    <customer id="bad-id">
+        <unclosed_tag>Data
+    </customer>
+</bad_root>

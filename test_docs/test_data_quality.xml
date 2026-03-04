@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Products>
+  <Product id="P001">
+    <Name>Wireless Headphones</Name>
+    <Category>Electronics</Category>
+    <Price currency="USD">49.99</Price>
+    <Stock>150</Stock>
+    <SKU>WH-BLK-001</SKU>
+    <LastUpdated>2026-02-01</LastUpdated>
+  </Product>
+  <Product id="P002">
+    <Name></Name>
+    <Category>Electronics</Category>
+    <Price currency="USD">-10.00</Price>
+    <Stock>abc</Stock>
+    <SKU></SKU>
+    <LastUpdated>2026-13-99</LastUpdated>
+  </Product>
+  <Product id="P001">
+    <Name>Wireless Headphones</Name>
+    <Category>Electronics</Category>
+    <Price currency="USD">49.99</Price>
+    <Stock>150</Stock>
+    <SKU>WH-BLK-001</SKU>
+    <LastUpdated>2026-02-01</LastUpdated>
+  </Product>
+  <Product id="P004">
+    <Name>USB-C Hub</Name>
+    <Category></Category>
+    <Price currency="INVALID_CURR">29.95</Price>
+    <Stock>9999999</Stock>
+    <SKU>UCH-SLV-004</SKU>
+    <LastUpdated></LastUpdated>
+  </Product>
+  <Product id="">
+    <Name>Mechanical Keyboard</Name>
+    <Category>Accessories</Category>
+    <Price currency="USD">120.00</Price>
+    <Stock>75</Stock>
+    <SKU>MK-RGB-005</SKU>
+    <LastUpdated>2025-12-15</LastUpdated>
+  </Product>
+</Products>

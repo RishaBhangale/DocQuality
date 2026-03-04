@@ -1,0 +1,68 @@
+MIME-Version: 1.0
+Date: Mon, 02 Mar 2026 09:15:00 +0530
+Message-ID: <dqtest-001@testmail.example.com>
+From: "Data Quality Bot" <dqbot@example.com>
+To: "Rishabh Bhangale" <rishabh.bhangale@corp.com>
+CC: "Team Lead" <lead@corp.com>
+Subject: [DQ ALERT] Data Quality Report - March 2026
+Content-Type: multipart/mixed; boundary="----=_DQTestBoundary"
+
+------=_DQTestBoundary
+Content-Type: text/plain; charset="UTF-8"
+
+Hello Rishabh,
+
+Automated Data Quality scan completed for pipeline: BRONZE_CUSTOMER_INGEST.
+
+Summary of Issues Found:
+  - 3 duplicate records detected (CustomerID: C001)
+  - 12 null values in mandatory field: customer_name
+  - 5 invalid email formats found
+  - 2 records with negative transaction_amount
+  - Date format mismatch in 7 records (expected: YYYY-MM-DD, got: DD/MM/YYYY)
+  - 1 record with age value = 999 (outlier)
+  - Missing schema field: phone_number in 4 records
+
+Total Records Scanned  : 1500
+Records Passed         : 1473
+Records Failed         : 27
+DQ Score               : 98.2%
+
+Please review the attached report for full details.
+
+Regards,
+Data Quality Monitoring System
+Corp Analytics Team
+
+------=_DQTestBoundary
+Content-Type: text/html; charset="UTF-8"
+
+<html><body>
+<h2 style="color:red;">[DQ ALERT] Data Quality Report - March 2026</h2>
+<p>Hello <strong>Rishabh</strong>,</p>
+<p>Automated DQ scan completed for pipeline: <code>BRONZE_CUSTOMER_INGEST</code>.</p>
+<table border="1" cellpadding="5">
+  <tr><th>Issue Type</th><th>Count</th><th>Severity</th></tr>
+  <tr><td>Duplicate Records</td><td>3</td><td style="color:orange;">Medium</td></tr>
+  <tr><td>Null mandatory fields</td><td>12</td><td style="color:red;">High</td></tr>
+  <tr><td>Invalid email formats</td><td>5</td><td style="color:orange;">Medium</td></tr>
+  <tr><td>Negative amounts</td><td>2</td><td style="color:red;">High</td></tr>
+  <tr><td>Date format mismatch</td><td>7</td><td style="color:orange;">Medium</td></tr>
+  <tr><td>Outlier values</td><td>1</td><td style="color:green;">Low</td></tr>
+  <tr><td>Missing schema fields</td><td>4</td><td style="color:red;">High</td></tr>
+</table>
+<p><strong>DQ Score: 98.2%</strong></p>
+</body></html>
+
+------=_DQTestBoundary
+Content-Type: text/csv; name="dq_failed_records.csv"
+Content-Disposition: attachment; filename="dq_failed_records.csv"
+
+RecordID,Issue,Field,Value,Severity
+C001,Duplicate,CustomerID,C001,Medium
+ROW_042,NullValue,customer_name,,High
+ROW_087,InvalidFormat,email,user@@broken,Medium
+ROW_110,NegativeValue,transaction_amount,-250.00,High
+ROW_201,DateMismatch,joining_date,15/03/2023,Medium
+ROW_399,Outlier,age,999,Low
+------=_DQTestBoundary--

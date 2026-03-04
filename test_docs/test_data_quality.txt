@@ -1,0 +1,48 @@
+Data Quality Test File - Customer Feedback Report
+===================================================
+Generated: 2026-03-04
+
+Record 1:
+  Name: Alice Johnson
+  Email: alice.johnson@example.com
+  Phone: +91-9876543210
+  Comment: Great service! Delivery was on time.
+  Rating: 5
+
+Record 2:
+  Name: Bob   Smith
+  Email: bobsmith@@wrongemail
+  Phone: 98765-ABCDE
+  Comment: Product was damaged on arrival.   
+  Rating: NULL
+
+Record 3:
+  Name: 
+  Email: carol@example.com
+  Phone: +91-9123456789
+  Comment: Average experience. Could be better.
+  Rating: 3.5
+
+Record 4 (DUPLICATE):
+  Name: Alice Johnson
+  Email: alice.johnson@example.com
+  Phone: +91-9876543210
+  Comment: Great service! Delivery was on time.
+  Rating: 5
+
+Record 5:
+  Name: David Kumar
+  Email: david.kumar@example
+  Phone: 0000000000
+  Comment: 
+  Rating: -1
+
+NOTE: This file contains intentional DQ issues:
+  - Missing name (Record 3)
+  - Invalid email format (Record 2, 5)
+  - Invalid phone (Record 2)
+  - NULL rating (Record 2)
+  - Negative rating (Record 5)
+  - Duplicate record (Record 4 = Record 1)
+  - Empty comment (Record 5)
+  - Extra whitespace (Record 2 name, Record 2 comment)

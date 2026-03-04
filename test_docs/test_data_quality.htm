@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DQ Test - Order Form Data</title>
+</head>
+<body>
+  <h1>Order Submission Log</h1>
+  <div class="order" id="ORD-001">
+    <p>Order ID: ORD-001</p>
+    <p>Customer Email: priya.k@example.com</p>
+    <p>Phone: +91-9988776655</p>
+    <p>Item: Laptop Stand</p>
+    <p>Quantity: 1</p>
+    <p>Total: INR 2500</p>
+  </div>
+  <div class="order dq-issue" id="ORD-002">
+    <p>Order ID: ORD-002</p>
+    <p>Customer Email: not_an_email</p>
+    <p>Phone: 000</p>
+    <p>Item: </p>
+    <p>Quantity: 0</p>
+    <p>Total: INR -500</p>
+  </div>
+  <div class="order" id="ORD-001">
+    <p>Order ID: ORD-001</p>
+    <p>Customer Email: priya.k@example.com</p>
+    <p>Phone: +91-9988776655</p>
+    <p>Item: Laptop Stand</p>
+    <p>Quantity: 1</p>
+    <p>Total: INR 2500</p>
+  </div>
+  <div class="order dq-issue" id="ORD-004">
+    <p>Order ID: ORD-004</p>
+    <p>Customer Email: </p>
+    <p>Phone: +91-XXXXXXXXXX</p>
+    <p>Item: Mouse Pad</p>
+    <p>Quantity: 999999</p>
+    <p>Total: INR 9999999</p>
+  </div>
+  <!-- Known DQ Issues: duplicate ORD-001, invalid email ORD-002, negative total ORD-002, missing item ORD-002, missing email ORD-004, invalid phone ORD-004 -->
+</body>
+</html>
