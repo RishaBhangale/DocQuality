@@ -166,13 +166,19 @@ class NormalizationService:
             validation_errors.extend(risk_errors)
 
         # ── Persist ──────────────────────────────────────────────
-        normalized = DocumentNormalized(
-            document_extracted_id=extracted.id,
-            version=1,
-            structured_fields_json=json.dumps(structured, default=str),
-            validation_errors_json=json.dumps(validation_errors) if validation_errors else None,
-        )
-        db.add(normalized)
+        if extracted.normalized:
+            normalized = extracted.normalized
+            normalized.version += 1
+            normalized.structured_fields_json = json.dumps(structured, default=str)
+            normalized.validation_errors_json = json.dumps(validation_errors) if validation_errors else None
+        else:
+            normalized = DocumentNormalized(
+                document_extracted_id=extracted.id,
+                version=1,
+                structured_fields_json=json.dumps(structured, default=str),
+                validation_errors_json=json.dumps(validation_errors) if validation_errors else None,
+            )
+            db.add(normalized)
 
         logger.info(
             "Normalization complete: %d fields structured, %d validation errors",

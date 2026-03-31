@@ -368,7 +368,11 @@ class EvaluationOrchestrator:
         document_raw_id: Optional[str] = None,
     ) -> Evaluation:
         """Persist evaluation results to the database."""
+        import uuid
+        generated_short_id = uuid.uuid4().hex[:6].upper()
+
         evaluation = Evaluation(
+            short_id=generated_short_id,
             filename=filename,
             document_type=document_type,
             semantic_type=semantic_type,
@@ -464,6 +468,7 @@ class EvaluationOrchestrator:
 
         return EvaluationResponse(
             evaluation_id=evaluation.id,
+            short_id=evaluation.short_id,
             filename=evaluation.filename,
             document_type=evaluation.document_type or "unknown",
             semantic_type=evaluation.semantic_type or "general",

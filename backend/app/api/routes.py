@@ -307,6 +307,7 @@ async def list_evaluations(
     return [
         {
             "evaluation_id": e.id,
+            "short_id": e.short_id,
             "filename": e.filename,
             "document_type": e.document_type,
             "overall_score": e.overall_score,

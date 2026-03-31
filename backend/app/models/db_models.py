@@ -158,6 +158,7 @@ class Evaluation(Base):
     __tablename__ = "evaluations"
 
     id: str = Column(String(36), primary_key=True, default=generate_uuid)
+    short_id: str = Column(String(10), unique=True, index=True, nullable=True)
     filename: str = Column(String(255), nullable=False)
     document_type: str = Column(String(100), nullable=True)
     semantic_type: str = Column(String(50), nullable=True, default="general")

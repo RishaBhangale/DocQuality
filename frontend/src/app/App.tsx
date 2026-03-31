@@ -18,7 +18,8 @@ import {
   Download,
   HelpCircle,
   Copy,
-  Check
+  Check,
+  Clock
 } from 'lucide-react';
 import { UploadCard } from './components/UploadCard';
 import { ScoreCircle } from './components/ScoreCircle';
@@ -27,6 +28,7 @@ import { IssuesTable } from './components/IssuesTable';
 import { StatusBadge } from './components/StatusBadge';
 import { MetricRadarChart } from './components/MetricRadarChart';
 import { MetricBarChart } from './components/MetricBarChart';
+import { HistoryModal } from './components/HistoryModal';
 
 import { ExecutiveSummary } from './components/ExecutiveSummary';
 import { AlertBox } from './components/AlertBox';
@@ -78,6 +80,7 @@ interface EvaluationResult {
   recommendations: string[];
   pipeline_status?: Record<string, string | number>;
   corrections_count?: number;
+  short_id?: string;
   created_at: string;
 }
 
@@ -219,6 +222,27 @@ export default function App() {
   const [evaluationResult, setEvaluationResult] = useState<EvaluationResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isHistoryView, setIsHistoryView] = useState(false);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const historyId = searchParams.get('id');
+
+    if (historyId) {
+      setIsEvaluating(true);
+      setIsHistoryView(true);
+      fetch(`${API_BASE_URL}/api/evaluation/${historyId}`)
+        .then(res => {
+          if (!res.ok) throw new Error("Failed to load history");
+          return res.json();
+        })
+        .then(data => setEvaluationResult(data))
+        .catch(err => setErrorMessage(err.message))
+        .finally(() => setIsEvaluating(false));
+    }
+  }, []);
+
   // Phase 2: Corrections fetching
   const [correctionsData, setCorrectionsData] = useState<{ grouped: Record<string, CorrectionProposal[]>, total: number } | null>(null);
   const [isLoadingCorrections, setIsLoadingCorrections] = useState(false);
@@ -331,13 +355,24 @@ export default function App() {
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600 hidden sm:block print:hidden">AI Governance & Compliance Quality</span>
             {evaluationResult && (
-              <button
-                onClick={handleDownloadReport}
-                className="hidden sm:flex px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg font-medium hover:bg-gray-50 items-center justify-center gap-2 transition-colors whitespace-nowrap text-sm print:hidden"
-              >
-                <Printer className="w-4 h-4" />
-                Print / Save PDF
-              </button>
+              <div className="flex items-center gap-3">
+                {!isHistoryView && (
+                  <button
+                    onClick={() => setIsHistoryOpen(true)}
+                    className="hidden sm:flex px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg font-medium hover:bg-gray-50 items-center justify-center gap-2 transition-colors whitespace-nowrap text-sm print:hidden"
+                  >
+                    <Clock className="w-4 h-4" />
+                    History
+                  </button>
+                )}
+                <button
+                  onClick={handleDownloadReport}
+                  className="hidden sm:flex px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg font-medium hover:bg-gray-50 items-center justify-center gap-2 transition-colors whitespace-nowrap text-sm print:hidden"
+                >
+                  <Printer className="w-4 h-4" />
+                  Print / Save PDF
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -447,6 +482,97 @@ export default function App() {
               </div>
             </div>
 
+            {/* QUALITY DIMENSIONS Grid */}
+            {(() => {
+              const coreMetrics = evaluationResult.core_metrics || evaluationResult.metrics.filter(m => m.category === 'core');
+              const specMetrics = evaluationResult.type_specific_metrics || [];
+              const coreAvg = coreMetrics.length ? coreMetrics.reduce((sum, m) => sum + m.score, 0) / coreMetrics.length : 0;
+              const specAvg = specMetrics.length ? specMetrics.reduce((sum, m) => sum + m.score, 0) / specMetrics.length : 0;
+              
+              const criticalCount = evaluationResult.issues.filter(i => i.severity === 'critical').length;
+              const moderateCount = evaluationResult.issues.filter(i => i.severity === 'warning').length;
+              
+              const fmtDate = evaluationResult.created_at ? new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(evaluationResult.created_at.endsWith('Z') ? evaluationResult.created_at : `${evaluationResult.created_at}Z`)) : 'N/A';
+              const displayId = evaluationResult.short_id ? `DOCQ-${(evaluationResult.created_at || "0000-00-00").substring(0,10).replace(/-/g,'')}-${evaluationResult.short_id}` : `ID-${(evaluationResult.evaluation_id || "PENDING").substring(0,6).toUpperCase()}`;
+
+              return (
+                <div className="mt-8">
+                  <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Quality Dimensions</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Tile 1: Document Integrity Score */}
+                    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 flex items-center gap-6">
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0"><ScoreCircle score={Math.round(coreAvg)} disableAnimation size="sm" /></div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Document Integrity Score</p>
+                        <p className="text-xs text-gray-400 mb-2">Based on universal quality metrics</p>
+                        <StatusBadge status={getScoreColor(coreAvg).text.includes('#16A34A') ? 'good' : coreAvg >= 50 ? 'warning' : 'critical'}>
+                          Quality Status
+                        </StatusBadge>
+                      </div>
+                    </div>
+                    {/* Tile 2: Domain-Specific Quality */}
+                    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 flex items-center gap-6">
+                      {specMetrics.length > 0 ? (
+                        <>
+                          <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0"><ScoreCircle score={Math.round(specAvg)} disableAnimation size="sm" /></div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">{(evaluationResult.semantic_type || 'Domain').replace(/_/g, ' ')} Quality</p>
+                            <p className="text-xs text-gray-400 mb-2">Based on framework-specific standards</p>
+                            <StatusBadge status={getScoreColor(specAvg).text.includes('#16A34A') ? 'good' : specAvg >= 50 ? 'warning' : 'critical'}>
+                              Quality Status
+                            </StatusBadge>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 relative flex items-center justify-center">
+                            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 160 160">
+                              <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="10" fill="transparent" className="text-gray-100" />
+                            </svg>
+                            <span className="absolute text-xl font-bold text-gray-400">N/A</span>
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Domain-Specific Quality</p>
+                            <p className="text-xs text-gray-400">No framework-specific ISO standards apply to this document type.</p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    {/* Tile 3: Issues Flagged */}
+                    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Issues Flagged</p>
+                        <div className="flex items-end gap-3 mb-2">
+                          <span className="text-4xl font-bold text-gray-900">{evaluationResult.issues?.length || 0}</span>
+                          <div className="flex flex-col mb-1 text-sm font-medium">
+                            {criticalCount > 0 && <span className="text-red-600">{criticalCount} Critical</span>}
+                            {moderateCount > 0 && <span className="text-yellow-600">{moderateCount} Moderate</span>}
+                            {criticalCount === 0 && moderateCount === 0 && <span className="text-green-600">0 Issues</span>}
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-400">Most affected: {(evaluationResult.issues && evaluationResult.issues.length > 0) ? (evaluationResult.issues[0].metric_name || 'General') : 'None'}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center">
+                         <AlertCircle className="w-6 h-6" />
+                      </div>
+                    </div>
+                    {/* Tile 4: Review Information */}
+                    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+                      <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Review Information</p>
+                      <div className="grid grid-cols-3 gap-y-3 gap-x-2 text-sm">
+                        <span className="text-gray-400">Review Date:</span>
+                        <span className="col-span-2 text-gray-900 font-medium">{fmtDate}</span>
+                        <span className="text-gray-400">File:</span>
+                        <span className="col-span-2 text-gray-900 font-medium truncate" title={evaluationResult.filename}>{evaluationResult.filename}</span>
+                        <span className="text-gray-400">ID:</span>
+                        <span className="col-span-2 font-mono text-gray-600 bg-gray-50 px-2 py-0.5 rounded w-max border border-gray-200">{displayId}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Executive Summary, Risk Assessment & Recommendations */}
             <ExecutiveSummary
               executiveSummary={evaluationResult.executive_summary}
@@ -546,7 +672,7 @@ export default function App() {
                       )}
                       <div>
                         <p className="text-sm font-medium text-gray-700 capitalize">{stage}</p>
-                        <p className="text-xs text-gray-500">{typeof status === 'number' ? 'Generated' : status}</p>
+                        <p className="text-xs text-gray-500">{typeof status === 'number' ? 'Generated' : String(status)}</p>
                       </div>
                     </div>
                   ))}
@@ -663,6 +789,10 @@ export default function App() {
           <span className="text-sm text-gray-500">Phase 2 — Data-Engineering Pipeline</span>
         </div>
       </footer>
+      
+      {isHistoryOpen && (
+        <HistoryModal onClose={() => setIsHistoryOpen(false)} apiBaseUrl={API_BASE_URL} />
+      )}
     </div>
   );
 }

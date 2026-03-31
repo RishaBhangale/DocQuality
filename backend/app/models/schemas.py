@@ -102,6 +102,7 @@ class EvaluationResponse(BaseModel):
     """Full evaluation response returned to the client."""
 
     evaluation_id: str
+    short_id: Optional[str] = None
     filename: str
     document_type: str
     semantic_type: str = "general"
@@ -134,6 +135,7 @@ class EvaluationSummary(BaseModel):
     """Lightweight evaluation summary for listing."""
 
     evaluation_id: str
+    short_id: Optional[str] = None
     filename: str
     overall_score: float
     overall_status: str
