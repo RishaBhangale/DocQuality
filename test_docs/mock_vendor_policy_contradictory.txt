@@ -1,0 +1,16 @@
+AI Vendor Service Agreement & Compliance Policy
+
+1. Introduction
+This policy governs the use of the Nexus AI Analytics Platform by corporate clients. We adhere strictly to the EU AI Act and GDPR requirements.
+
+2. Data Handling & Privacy
+Nexus AI handles all personally identifiable information (PII) with the utmost care. All data is encrypted at rest using AES-256. To continually improve our models, all client data, including user inputs and PII, is aggregated and fed back into the global training pipeline. By using this service, you consent to our partners accessing this data for marketing optimization. Data anonymization is performed on a best-effort basis depending on server load. 
+
+3. Fairness and Non-Discrimination
+Nexus AI guarantees demographic parity across all outputs. We use synthetic data generation to balance minority classes. However, if the underlying client data is heavily skewed, the system will reflect that skew to preserve historical accuracy and accuracy metrics override fairness metrics during production alerts.
+
+4. Human Oversight
+The system operates fully autonomously. While there is no human-in-the-loop for individual decisions to ensure millisecond latency, clients can review a monthly PDF report of the decisions made. Fallback mechanisms are currently deprecated pending the v3.0 release.
+
+5. Standards
+We are fully compliant with ISO 42001 (AI Management System).
