@@ -9,7 +9,7 @@ import logging
 import time
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Request
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Request, Form
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -150,6 +150,7 @@ async def test_llm_connection():
 )
 async def evaluate_document(
     file: UploadFile = File(..., description="Document file to evaluate"),
+    eval_mode: Optional[str] = Form("compliance", description="Evaluation mode: 'compliance' or 'banking'"),
     db: Session = Depends(get_db),
     _rate_limit: None = Depends(check_rate_limit),
 ):
@@ -161,12 +162,13 @@ async def evaluate_document(
 
     Args:
         file: Uploaded document file.
+        eval_mode: Selected application mode for processing.
         db: Database session (injected).
 
     Returns:
         Complete evaluation response with scores, metrics, and issues.
     """
-    logger.info("Received evaluation request for file: %s", file.filename)
+    logger.info("Received evaluation request for file: %s (Mode: %s)", file.filename, eval_mode)
 
     # Validate file type
     try:
@@ -198,6 +200,7 @@ async def evaluate_document(
             file_path=file_path,
             filename=file.filename or "document",
             db=db,
+            eval_mode=eval_mode,
         )
         return result
 

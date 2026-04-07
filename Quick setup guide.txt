@@ -1,13 +1,173 @@
-BACKEND SETUP
+==============================================================
+  DocQuality — Unified AI Compliance & Banking Platform
+  Quick Setup Guide
+==============================================================
 
-cd "path\DocQuality\backend"
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+This project is a single unified application that supports two
+evaluation modes:
+  1. AI Governance & Compliance (ISO 27001/27701/42001)
+  2. Banking Intelligence Quality (KYC, Loan, Treasury, etc.)
 
-FRONTEND SETUP
+The user selects which workspace to enter via a Splash Screen
+on first load. All code lives inside the DocQuality/ folder.
 
-cd "path\DocQuality\frontend"
-npm install
-npm run dev
+--------------------------------------------------------------
+  PREREQUISITES
+--------------------------------------------------------------
+
+  • Python 3.10+
+  • Node.js 18+ and npm
+  • (Optional) Tesseract OCR for image-based document processing
+
+--------------------------------------------------------------
+  STEP-BY-STEP STARTUP
+--------------------------------------------------------------
+
+  TERMINAL 1 — Backend (FastAPI + Uvicorn)
+  -----------------------------------------
+
+  1. Navigate to the backend directory:
+
+       cd DocQuality/backend
+
+  2. Create and activate a virtual environment (first time only):
+
+       python -m venv venv
+
+  3. Activate the virtual environment:
+
+       source venv/bin/activate        # macOS / Linux
+       .\venv\Scripts\activate          # Windows
+
+  4. Install Python dependencies:
+
+       pip install -r requirements.txt
+
+  5. Set up your environment variables (first time only):
+
+       cp .env.example .env
+       # Edit .env and fill in:
+       #   FOUNDRY_API_KEY=<your Azure AI key>
+       #   FOUNDRY_ENDPOINT=<your Azure endpoint>
+       #   FOUNDRY_MODEL=<model name, e.g. gpt-4>
+
+  6. Start the backend server:
+
+       python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+     You should see:
+       ✓ Uvicorn running on http://0.0.0.0:8000
+       ✓ Server ready at http://0.0.0.0:8000
+       ✓ API docs at http://0.0.0.0:8000/docs
+
+
+  TERMINAL 2 — Frontend (Vite + React)
+  -----------------------------------------
+
+  1. Navigate to the frontend directory:
+
+       cd DocQuality/frontend
+
+  2. Install Node dependencies (first time only):
+
+       npm install
+
+  3. Start the development server:
+
+       npm run dev
+
+     You should see:
+       ✓ VITE ready
+       ✓ Local: http://localhost:5173/
+
+--------------------------------------------------------------
+  USING THE APPLICATION
+--------------------------------------------------------------
+
+  1. Open http://localhost:5173/ in your browser.
+
+  2. You will see the Splash Screen with two workspace cards:
+
+       • AI Governance & Compliance
+       • Banking Intelligence Quality
+
+  3. Click on the mode you want to work in.
+
+  4. Upload a document (PDF, DOCX, TXT, PNG, JPG) and click
+     "Evaluate" to run the agentic evaluation pipeline.
+
+  5. View the results: overall score, per-metric breakdown,
+     radar chart, issues, and recommendations.
+
+  6. For Banking mode, you'll also see domain-specific metrics
+     (e.g., BOTI, IESS, CPI) and regulatory pass/fail status.
+
+  7. Use the "Switch Workspace" button in the header to go
+     back to the Splash Screen and change modes at any time.
+
+--------------------------------------------------------------
+  KEY ENDPOINTS (Backend)
+--------------------------------------------------------------
+
+  GET  /api/health              Health check
+  POST /api/evaluate            Evaluate a document
+                                 Form fields:
+                                   file: <uploaded file>
+                                   eval_mode: "compliance" or "banking"
+  GET  /api/evaluations         List past evaluations
+  GET  /api/evaluations/{id}    Get a specific evaluation
+  GET  /docs                    Swagger API documentation
+
+--------------------------------------------------------------
+  PROJECT STRUCTURE
+--------------------------------------------------------------
+
+  DocQuality/
+  ├── backend/
+  │   ├── app/
+  │   │   ├── api/routes.py              # API endpoints
+  │   │   ├── config.py                  # All config (compliance + banking)
+  │   │   ├── main.py                    # FastAPI app entry point
+  │   │   ├── models/
+  │   │   │   ├── db_models.py           # SQLAlchemy models
+  │   │   │   └── schemas.py             # Pydantic schemas
+  │   │   └── services/
+  │   │       ├── evaluation_orchestrator.py  # Core 10-step pipeline
+  │   │       ├── rule_engine.py              # Compliance rule engine
+  │   │       ├── banking_rule_engine.py      # Banking domain rules
+  │   │       ├── scoring_engine.py           # Weighted scoring (both modes)
+  │   │       ├── llm_service.py              # Azure AI LLM integration
+  │   │       ├── document_service.py         # Text/table extraction
+  │   │       └── visualization_service.py    # Chart generation
+  │   ├── requirements.txt
+  │   └── .env
+  └── frontend/
+      ├── src/app/
+      │   ├── App.tsx                    # Main app (mode switching)
+      │   ├── components/
+      │   │   ├── SplashPage.tsx         # Workspace selector
+      │   │   ├── BankingRadarChart.tsx   # Banking radar viz
+      │   │   ├── BankingMetricCard.tsx   # Banking metric cards
+      │   │   ├── BankingScoreCard.tsx    # Banking score display
+      │   │   └── MetricExplanation.tsx   # How We Evaluate section
+      │   └── domainLabels.ts            # Banking domain mappings
+      ├── package.json
+      └── vite.config.ts
+
+--------------------------------------------------------------
+  TROUBLESHOOTING
+--------------------------------------------------------------
+
+  • "ModuleNotFoundError: No module named 'pdfplumber'"
+    → Make sure you activated the venv before running uvicorn.
+
+  • "FOUNDRY_API_KEY is not configured"
+    → Check your .env file has valid Azure credentials.
+
+  • Frontend shows blank page
+    → Check browser console for errors. Ensure backend is
+      running on port 8000 (frontend proxies API calls there).
+
+  • Banking mode shows no domain metrics
+    → The document must be classified as a banking domain by
+      the LLM classification agent. Try a KYC or loan document.

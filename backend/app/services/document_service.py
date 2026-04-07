@@ -36,7 +36,7 @@ class DocumentService:
     validation and error handling.
     """
 
-    SUPPORTED_EXTENSIONS: set[str] = {".pdf", ".docx", ".txt", ".md"}
+    SUPPORTED_EXTENSIONS: set[str] = {".pdf", ".docx", ".txt", ".md", ".png", ".jpg", ".jpeg"}
 
     def __init__(self) -> None:
         """Initialize the document service."""
@@ -130,6 +130,8 @@ class DocumentService:
                 raw_text = self.extract_text_from_docx(file_path)
             elif ext in {".txt", ".md"}:
                 raw_text = self.extract_text_from_txt(file_path)
+            elif ext in {".png", ".jpg", ".jpeg"}:
+                raw_text, _ = self.extract_text_from_image(file_path)
             else:
                 raise ValueError(f"Unsupported file extension: {ext}")
 
@@ -143,6 +145,56 @@ class DocumentService:
         except Exception as e:
             logger.error("Text extraction failed for %s: %s", file_path, str(e))
             raise RuntimeError(f"Failed to extract text from file: {str(e)}") from e
+
+    def extract_text_and_tables(self, file_path: str) -> tuple[str, str, float]:
+        """
+        Extract both raw text and structured table data from a document.
+
+        Args:
+            file_path: Path to the document.
+
+        Returns:
+            Tuple of (plain_text, table_text, ocr_confidence).
+            ocr_confidence is 1.0 for non-image files, 0.0 if extraction skipped.
+        """
+        if not file_path or not isinstance(file_path, str):
+            logger.error("Invalid file path provided")
+            return "", "", 0.0
+
+        if not os.path.exists(file_path):
+            logger.error("File not found: %s", file_path)
+            return "", "", 0.0
+
+        ext = Path(file_path).suffix.lower()
+        ocr_confidence = 1.0
+        table_text = ""
+        plain_text = ""
+
+        try:
+            if ext == ".pdf":
+                plain_text = self.extract_text_from_pdf(file_path)
+                try:
+                    table_text = self.extract_tables_from_pdf(file_path)
+                except Exception as table_err:
+                    logger.debug("Table extraction failed (non-critical): %s", table_err)
+            elif ext == ".docx":
+                plain_text = self.extract_text_from_docx(file_path)
+            elif ext in {".txt", ".md"}:
+                plain_text = self.extract_text_from_txt(file_path)
+            elif ext in {".png", ".jpg", ".jpeg"}:
+                plain_text, ocr_confidence = self.extract_text_from_image(file_path)
+            else:
+                logger.error("Unsupported file extension: %s", ext)
+                return "", "", 0.0
+
+            if not plain_text or not isinstance(plain_text, str):
+                logger.warning("Failed to extract text from %s", file_path)
+                return "", "", 0.0
+        except Exception as e:
+            logger.error("Text extraction failed for %s: %s", file_path, str(e))
+            return "", "", 0.0
+
+        return self.normalize_text(plain_text), self.normalize_text(table_text), ocr_confidence
 
     def extract_text_from_txt(self, file_path: str) -> str:
         """
@@ -182,6 +234,39 @@ class DocumentService:
                     logger.debug("No text extracted from page %d of %s", page_num, file_path)
         return "\n".join(text_parts)
 
+    def extract_tables_from_pdf(self, file_path: str) -> str:
+        """
+        Extract tabular data from a PDF file using pdfplumber.
+
+        Args:
+            file_path: Path to the PDF file.
+
+        Returns:
+            Formatted table text, or empty string if no tables found.
+        """
+        table_parts: list[str] = []
+        try:
+            with pdfplumber.open(file_path) as pdf:
+                for page_num, page in enumerate(pdf.pages, start=1):
+                    tables = page.extract_tables()
+                    if not tables:
+                        continue
+                    table_parts.append(f"--- Page {page_num} Tables ---")
+                    for tbl_idx, table in enumerate(tables, start=1):
+                        if not table:
+                            continue
+                        table_parts.append(f"Table {tbl_idx}:")
+                        for row in table:
+                            formatted = " | ".join(
+                                (str(cell).strip() if cell else "") for cell in row
+                            )
+                            if formatted.strip("| "):
+                                table_parts.append(formatted)
+                        table_parts.append("")
+        except Exception as e:
+            logger.warning("Table extraction failed for %s: %s", file_path, str(e))
+        return "\n".join(table_parts)
+
     def extract_text_from_docx(self, file_path: str) -> str:
         """
         Extract text from a DOCX file using python-docx.
@@ -208,7 +293,7 @@ class DocumentService:
 
         return "\n".join(text_parts)
 
-    def extract_text_from_image(self, file_path: str) -> str:
+    def extract_text_from_image(self, file_path: str) -> tuple[str, float]:
         """
         Extract text from an image file using OCR (Tesseract).
 
@@ -216,7 +301,7 @@ class DocumentService:
             file_path: Path to the image file.
 
         Returns:
-            OCR-extracted text.
+            Tuple of (extracted_text, confidence 0.0-1.0).
 
         Raises:
             RuntimeError: If Tesseract is not available.
@@ -228,7 +313,7 @@ class DocumentService:
 
         image = Image.open(file_path)
         text = pytesseract.image_to_string(image)
-        return text
+        return text, 0.75  # Default confidence when detailed data not available
 
     def normalize_text(self, text: str) -> str:
         """

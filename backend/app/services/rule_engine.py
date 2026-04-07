@@ -649,15 +649,84 @@ RULE_REGISTRY: dict[str, RuleFn] = {
 }
 
 
-def execute_rule(rule_fn_name: str, fields: dict[str, Any], raw_text: str) -> tuple[float, list[IssueSchema]]:
-    """Execute a rule function by name from the registry."""
-    fn = RULE_REGISTRY.get(rule_fn_name)
-    if fn is None:
-        logger.error("Unknown rule function: %s", rule_fn_name)
-        return 0.0, [IssueSchema(
-            field_name="System",
-            issue_type="Configuration Error",
-            description=f"Rule function '{rule_fn_name}' not found in RULE_REGISTRY.",
-            severity="critical",
-        )]
-    return fn(fields, raw_text)
+
+class RuleEngine:
+    """
+    Bridge class to provide the interface expected by EvaluationOrchestrator
+    while utilizing the existing function-based RULE_REGISTRY.
+    """
+
+    FORMAT_PATTERNS: dict[str, str] = {
+        "email": r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
+        "phone": r"^[\+]?[(]?[0-9]{1,4}[)]?[-\s\./0-9]*$",
+        "date": r"\d{1,4}[-/\.]\d{1,2}[-/\.]\d{1,4}",
+        "currency_amount": r"^[\$€£¥]?\s?\d{1,3}(,\d{3})*(\.\d{2})?$",
+        "postal_code": r"^\d{5}(-\d{4})?$|^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$",
+        "url": r"^https?://[^\s]+$",
+    }
+
+    _INVOICE_NUMBER_PATTERNS: list[re.Pattern] = [
+        re.compile(r"\b(?:invoice\s*(?:number|no\.?|#)\s*[:#]?\s*)([A-Z0-9][A-Z0-9\-\/]{2,})\b", re.IGNORECASE),
+        re.compile(r"\b(?:inv\s*#\s*[:#]?\s*)([A-Z0-9][A-Z0-9\-\/]{2,})\b", re.IGNORECASE),
+    ]
+
+    def extract_basic_fields_from_text(self, document_text: str) -> dict[str, Any]:
+        """Extract basic fields like dates and identifiers directly from text."""
+        fields: dict[str, Any] = {}
+        text = document_text or ""
+
+        # Basic ID extraction
+        for pattern in self._INVOICE_NUMBER_PATTERNS:
+            match = pattern.search(text)
+            if match:
+                fields["id"] = match.group(1)
+                break
+
+        # Basic Date extraction
+        m = re.search(self.FORMAT_PATTERNS["date"], text)
+        if m:
+            fields["date"] = m.group(0)
+
+        # Content classification hints
+        if "policy" in text.lower():
+            fields["document_category"] = "policy"
+        elif "report" in text.lower():
+            fields["document_category"] = "report"
+
+        return fields
+
+    def calculate_completeness(self, fields: dict[str, Any], raw_text: str) -> tuple[float, list[IssueSchema]]:
+        return evaluate_completeness(fields, raw_text)
+
+    def calculate_validity(self, fields: dict[str, Any], raw_text: str) -> tuple[float, list[IssueSchema]]:
+        return evaluate_validity(fields, raw_text)
+
+    def calculate_consistency(self, fields: dict[str, Any], raw_text: str) -> tuple[float, list[IssueSchema]]:
+        return evaluate_consistency(fields, raw_text)
+
+    def calculate_accuracy(self, fields: dict[str, Any], raw_text: str) -> tuple[float, list[IssueSchema]]:
+        return evaluate_accuracy(fields, raw_text)
+
+    def calculate_timeliness(self, fields: dict[str, Any], raw_text: str) -> tuple[float, list[IssueSchema]]:
+        return evaluate_timeliness(fields, raw_text)
+
+    def calculate_uniqueness(self, fields: dict[str, Any], raw_text: str) -> tuple[float, list[IssueSchema]]:
+        return evaluate_uniqueness(fields, raw_text)
+
+    def generate_deterministic_recommendations(
+        self, issues: list[IssueSchema], metric_scores: dict[str, float]
+    ) -> list[str]:
+        """Generate high-level recommendations based on detected issues."""
+        recs = []
+        for issue in issues:
+            if issue.severity == "critical":
+                recs.append(f"Critical: {issue.description}")
+            elif issue.severity == "warning" and len(recs) < 5:
+                recs.append(issue.description)
+
+        # Score based recs
+        for metric, score in metric_scores.items():
+            if score < 60:
+                recs.append(f"Improve document {metric} to meet compliance standards.")
+
+        return list(set(recs))[:10]
