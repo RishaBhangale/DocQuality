@@ -82,3 +82,22 @@ pnpm-debug.log*
 
 # Framework/Tools
 .eslintcache
+
+# ==================================
+# App Data & Local System
+# ==================================
+# Vector databases and local metadata
+backend/data/
+graphify-out/
+
+# Test documents and uploads
+test_docs/
+test_kb_samples/
+upload/
+.uploaded_docs/
+
+# Agent/IDE metadata
+.agent/
+.opencode/
+opencode.json
+AGENTS.md

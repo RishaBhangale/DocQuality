@@ -33,6 +33,7 @@ import { HistoryModal } from './components/HistoryModal';
 
 import { ExecutiveSummary } from './components/ExecutiveSummary';
 import { AlertBox } from './components/AlertBox';
+import { KnowledgeBasePanel } from '../shared/KnowledgeBasePanel';
 
 // --- Types matching backend API response ---
 
@@ -399,6 +400,13 @@ export default function App() {
                 Upload a document to receive a structured quality and compliance analysis.
               </p>
             </div>
+
+            <KnowledgeBasePanel
+              workspace="compliance"
+              apiPrefix="/compliance/api"
+              accentColor="#1E3A8A"
+              accentColorLight="#EFF6FF"
+            />
 
             <UploadCard onFileSelect={handleFileSelect} selectedFile={selectedFile} />
 

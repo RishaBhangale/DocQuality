@@ -328,8 +328,28 @@ class EvaluationOrchestrator:
         llm_recommendations: list[str] = []
         llm_issues: list[IssueSchema] = []
 
+        # Retrieve KB context for RAG-enhanced evaluation
+        reference_context: list[str] = []
         try:
-            strict_llm, llm_raw = self.llm_service.evaluate_quality_strict(combined_text, deterministic_output)
+            from shared.knowledge_base.service import KnowledgeBaseService, get_kb_session
+            from banking.config import settings as banking_settings
+            kb_db = get_kb_session()
+            kb_service = KnowledgeBaseService(
+                workspace="banking",
+                api_key=banking_settings.FOUNDRY_API_KEY,
+                endpoint=banking_settings.FOUNDRY_ENDPOINT,
+                model=banking_settings.FOUNDRY_MODEL,
+                api_version=banking_settings.FOUNDRY_API_VERSION,
+            )
+            if kb_service.is_ready(kb_db):
+                logger.info("Banking KB is ready. Retrieving reference context for RAG...")
+                reference_context = kb_service.retrieve_context(combined_text)
+            kb_db.close()
+        except Exception as exc:
+            logger.warning("Failed to retrieve banking KB context: %s", exc)
+
+        try:
+            strict_llm, llm_raw = self.llm_service.evaluate_quality_strict(combined_text, deterministic_output, reference_context)
             llm_recommendations = strict_llm.recommendations or []
             llm_issues = strict_llm.issues_observations or []
 

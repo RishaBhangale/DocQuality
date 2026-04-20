@@ -50,6 +50,7 @@ def build_extraction_prompt(
     document_text: str,
     semantic_type: str,
     metrics: list[MetricDefinition],
+    reference_context: list[str] | None = None,
 ) -> str:
     """Build a dynamic LLM prompt based on the detected semantic type and active metrics."""
 
@@ -68,6 +69,18 @@ def build_extraction_prompt(
     score_keys = ", ".join([f'"{m.id}": <0-100>' for m in metrics])
     reasoning_keys = ", ".join([f'"{m.id}": "<reasoning>"' for m in metrics])
 
+    # Build optional KB context section
+    kb_section = ""
+    if reference_context:
+        kb_text = "\n\n".join(reference_context[:5])  # Max 5 chunks
+        kb_section = f"""\n\nREFERENCE STANDARDS (Organization's Knowledge Base):
+The following excerpts are from the organization's approved reference documents.
+Use these as ground truth when evaluating quality and compliance alignment.
+Compare the document being evaluated against these standards and penalize deviations.
+---
+{kb_text}
+---"""
+
     return f"""You are a Document Quality and Compliance Auditor. Analyze the following document text and return a structured JSON response.
 
 The document has been classified as: **{semantic_type}**
@@ -75,11 +88,11 @@ The document has been classified as: **{semantic_type}**
 INSTRUCTIONS:
 1. Extract all structural elements, policies, or mechanisms related to quality and compliance.
 2. Evaluate each quality metric below on a scale of 0-100 with strict reasoning. Be critical.
-3. Provide an executive summary, risk summary, and actionable recommendations.
+3. Provide an executive summary, risk summary, and actionable recommendations.{f"{chr(10)}4. Use the REFERENCE STANDARDS section below as ground truth for evaluation. Score how well the document aligns with these organizational standards." if reference_context else ""}
 
 QUALITY METRICS TO EVALUATE:
 {metrics_block}
-
+{kb_section}
 DOCUMENT TEXT:
 ---
 {document_text}
@@ -277,11 +290,13 @@ class AzureFoundryLLMService:
         document_text: str,
         semantic_type: str = "general",
         metrics: Optional[list[MetricDefinition]] = None,
+        reference_context: list[str] | None = None,
     ) -> tuple[LLMExtractionResponse, str]:
         """
         Send document text to the LLM for structured extraction.
 
-        Now accepts semantic_type and active metrics to build a dynamic prompt.
+        Now accepts semantic_type, active metrics, and optional KB reference context
+        to build a dynamic prompt.
         """
         if not self.is_configured:
             raise RuntimeError(
@@ -293,7 +308,7 @@ class AzureFoundryLLMService:
             metrics = get_metrics_for_type(semantic_type)
 
         truncated_text = self._truncate_text(document_text)
-        prompt = build_extraction_prompt(truncated_text, semantic_type, metrics)
+        prompt = build_extraction_prompt(truncated_text, semantic_type, metrics, reference_context)
 
         url = self._build_url()
         headers = self._build_headers()

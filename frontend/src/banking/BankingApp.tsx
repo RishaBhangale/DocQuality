@@ -10,6 +10,7 @@ import { MetricRadarChart } from './components/MetricRadarChart';
 import { MetricBarChart } from './components/MetricBarChart';
 import { ExecutiveSummary } from './components/ExecutiveSummary';
 import { AlertBox } from './components/AlertBox';
+import { KnowledgeBasePanel } from '../shared/KnowledgeBasePanel';
 import { BankingMetricCard } from './components/BankingMetricCard';
 import { BankingScoreCard } from './components/BankingScoreCard';
 import { BankingRadarChart } from './components/BankingRadarChart';
@@ -487,6 +488,13 @@ export default function App() {
                 {" "}When applicable, it also includes banking-domain validation.
               </p>
             </div>
+
+            <KnowledgeBasePanel
+              workspace="banking"
+              apiPrefix="/banking/api"
+              accentColor="#0D9488"
+              accentColorLight="#F0FDFA"
+            />
 
             <UploadCard onFileSelect={handleFileSelect} selectedFile={selectedFile} />
 

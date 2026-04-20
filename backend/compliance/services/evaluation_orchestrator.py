@@ -158,11 +158,32 @@ class EvaluationOrchestrator:
 
         try:
             if self.llm_service.is_configured:
+                # Setup KB RAG retrieval
+                reference_context = []
+                try:
+                    from shared.knowledge_base.service import KnowledgeBaseService, get_kb_session
+                    from compliance.config import settings
+                    kb_db = get_kb_session()
+                    kb_service = KnowledgeBaseService(
+                        workspace="compliance",
+                        api_key=settings.FOUNDRY_API_KEY,
+                        endpoint=settings.FOUNDRY_ENDPOINT,
+                        model=settings.FOUNDRY_MODEL,
+                        api_version=settings.FOUNDRY_API_VERSION,
+                    )
+                    if kb_service.is_ready(kb_db):
+                        logger.info("KB is ready. Retrieving reference context for RAG...")
+                        reference_context = kb_service.retrieve_context(document_text)
+                    kb_db.close()
+                except Exception as exc:
+                    logger.warning("Failed to retrieve KB context during evaluation: %s", exc)
+
                 logger.info("Step 4: Calling LLM with dynamic prompt (%d metrics)...", len(active_metrics))
                 llm_response, llm_raw = self.llm_service.extract_and_evaluate(
                     document_text,
                     semantic_type=semantic_type,
                     metrics=active_metrics,
+                    reference_context=reference_context,
                 )
                 logger.info("LLM extraction successful. Document type: %s", llm_response.document_type)
             else:

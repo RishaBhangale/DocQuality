@@ -291,7 +291,7 @@ DETERMINISTIC OUTPUT (JSON):
 ---
 {deterministic_output_json}
 ---
-
+{reference_context}
 DOCUMENT TEXT:
 ---
 {document_text}
@@ -1495,6 +1495,7 @@ class AzureFoundryLLMService:
         self,
         document_text: str,
         deterministic_output: dict,
+        reference_context: list[str] | None = None,
     ) -> tuple[LLMStrictQualityResponse, str]:
         """Strict LLM second-layer evaluation: validate/challenge/refine deterministic results."""
         det_json = json.dumps(deterministic_output or {}, indent=2, default=str)
@@ -1534,12 +1535,26 @@ class AzureFoundryLLMService:
         if not chunks:
             chunks = [_Chunk(text=document_text or "", start=0, end=len(document_text or ""))]
 
+        kb_section = ""
+        if reference_context:
+            kb_text = "\n\n".join(reference_context[:5])
+            kb_section = f"""
+REFERENCE STANDARDS (Organization's Knowledge Base):
+The following excerpts are from the organization's approved reference documents.
+Use these as ground truth when evaluating quality and compliance alignment.
+Compare the document being evaluated against these standards and penalize deviations.
+---
+{kb_text}
+---
+"""
+
         parts: list[LLMStrictQualityResponse] = []
         raw_parts: list[str] = []
         for idx, ch in enumerate(chunks, start=1):
             logger.info("LLM strict quality chunk %d/%d (chars %d-%d)", idx, len(chunks), ch.start, ch.end)
             prompt = STRICT_QUALITY_PROMPT.format(
                 deterministic_output_json=det_json,
+                reference_context=kb_section,
                 document_text=(ch.text or ""),
             )
             content, raw = self._call_llm(
