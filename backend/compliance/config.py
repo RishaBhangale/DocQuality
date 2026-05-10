@@ -129,6 +129,7 @@ class MetricDefinition:
     rule_fn: str                 # name of the function in rule_engine RULE_REGISTRY
     weight: float = 1.0
     description: str = ""
+    methodology: str = ""
 
 
 # --- Core Metrics (apply to ALL document types) ---
@@ -143,6 +144,7 @@ CORE_METRICS: list[MetricDefinition] = [
         rule_fn="evaluate_completeness",
         weight=0.20,
         description="Checks whether the document contains all expected sections, fields, and structural elements.",
+        methodology="Reviews the document for required sections, fields, and overall structure to confirm nothing essential is missing.",
     ),
     MetricDefinition(
         id="validity",
@@ -153,6 +155,7 @@ CORE_METRICS: list[MetricDefinition] = [
         rule_fn="evaluate_validity",
         weight=0.15,
         description="Verifies that dates, references, and identifiers conform to expected formats.",
+        methodology="Checks dates, identifiers, and references against expected formatting rules so the document stays traceable and machine-readable.",
     ),
     MetricDefinition(
         id="consistency",
@@ -163,6 +166,7 @@ CORE_METRICS: list[MetricDefinition] = [
         rule_fn="evaluate_consistency",
         weight=0.15,
         description="Checks coherence across sections — summaries match body, terminology is uniform.",
+        methodology="Compares related sections and terminology to make sure the document does not contradict itself.",
     ),
     MetricDefinition(
         id="accuracy",
@@ -173,6 +177,7 @@ CORE_METRICS: list[MetricDefinition] = [
         rule_fn="evaluate_accuracy",
         weight=0.20,
         description="Evaluates whether numeric values, calculations, and factual references are correct.",
+        methodology="Validates numbers, calculations, and factual references against the source material and internal logic.",
     ),
     MetricDefinition(
         id="timeliness",
@@ -183,6 +188,7 @@ CORE_METRICS: list[MetricDefinition] = [
         rule_fn="evaluate_timeliness",
         weight=0.15,
         description="Assesses whether the document has been reviewed recently and carries current dates.",
+        methodology="Looks for current review dates, renewal markers, and time-sensitive references to confirm the document is still current.",
     ),
     MetricDefinition(
         id="uniqueness",
@@ -193,6 +199,7 @@ CORE_METRICS: list[MetricDefinition] = [
         rule_fn="evaluate_uniqueness",
         weight=0.15,
         description="Detects duplicate or near-duplicate sections, paragraphs, or entries within the document.",
+        methodology="Scans for repeated sections, duplicated paragraphs, or overlapping entries that reduce document quality and clarity.",
     ),
 ]
 
@@ -213,6 +220,7 @@ TYPE_SPECIFIC_METRICS: list[MetricDefinition] = [
         rule_fn="evaluate_isms_doc_control",
         weight=1.0,
         description="Checks for document versioning, ownership, classification, approval, and review dates.",
+        methodology="Verifies whether the document carries version control, ownership, approval, classification, and review metadata expected for governed records.",
     ),
     MetricDefinition(
         id="annex_a_coverage",
@@ -226,6 +234,7 @@ TYPE_SPECIFIC_METRICS: list[MetricDefinition] = [
         rule_fn="evaluate_annex_a_coverage",
         weight=1.0,
         description="Scans for references to Annex A control categories across the Statement of Applicability.",
+        methodology="Looks for explicit coverage of Annex A control families and maps them to the Statement of Applicability or equivalent control inventory.",
     ),
 
     # ── Privacy / ISO 27701 ──
@@ -241,6 +250,7 @@ TYPE_SPECIFIC_METRICS: list[MetricDefinition] = [
         rule_fn="evaluate_ropa_completeness",
         weight=1.0,
         description="Checks that mandatory RoPA fields are present: processing purposes, lawful basis, data categories, recipients, retention periods, and transfers.",
+        methodology="Reviews the RoPA record for each mandatory processing detail so the activity inventory is complete enough for audit and privacy review.",
     ),
     MetricDefinition(
         id="dsar_procedure",
@@ -254,6 +264,7 @@ TYPE_SPECIFIC_METRICS: list[MetricDefinition] = [
         rule_fn="evaluate_dsar_procedure",
         weight=1.0,
         description="Verifies presence of DSAR workflow, response timelines, contact channels, and escalation paths.",
+        methodology="Checks whether a DSAR process is actually described end to end, including how requests arrive, who handles them, and when escalation happens.",
     ),
 
     # ── AI Governance / ISO 42001 ──
@@ -269,6 +280,7 @@ TYPE_SPECIFIC_METRICS: list[MetricDefinition] = [
         rule_fn="evaluate_ai_risk_assessment",
         weight=1.0,
         description="Checks for structured risk entries with scenario, likelihood, impact, mitigation, and residual risk.",
+        methodology="Looks for a structured AI risk assessment that captures scenarios, impact, likelihood, mitigations, and any remaining residual risk.",
     ),
     MetricDefinition(
         id="ai_governance_clarity",
@@ -284,6 +296,7 @@ TYPE_SPECIFIC_METRICS: list[MetricDefinition] = [
         rule_fn="evaluate_ai_governance_clarity",
         weight=1.0,
         description="Checks that roles, lifecycle processes, human oversight, and accountability mechanisms are clearly defined.",
+        methodology="Assesses whether governance responsibilities, lifecycle controls, human oversight, and accountability are defined clearly enough to operate the AI program.",
     ),
 
     # ── Legacy AI-specific metrics (now type-specific for AI docs) ──
@@ -299,6 +312,7 @@ TYPE_SPECIFIC_METRICS: list[MetricDefinition] = [
         rule_fn="evaluate_fairness",
         weight=1.0,
         description="Evaluates bias mitigation strategies, demographic parity, and anti-discrimination policies.",
+        methodology="Checks whether the document explains how bias is identified, reduced, and monitored across relevant populations or use cases.",
     ),
     MetricDefinition(
         id="transparency",
@@ -312,6 +326,7 @@ TYPE_SPECIFIC_METRICS: list[MetricDefinition] = [
         rule_fn="evaluate_transparency",
         weight=1.0,
         description="Checks documentation of model architecture, training data, intended use, and explainability.",
+        methodology="Reviews whether the document explains how the system works, what it was trained on, and how users can understand its behavior.",
     ),
     MetricDefinition(
         id="accountability",
@@ -325,6 +340,7 @@ TYPE_SPECIFIC_METRICS: list[MetricDefinition] = [
         rule_fn="evaluate_accountability",
         weight=1.0,
         description="Checks for human-in-the-loop, oversight, audit trails, and fallback procedures.",
+        methodology="Looks for oversight mechanisms, audit trails, and fallback controls that show clear accountability for AI decisions.",
     ),
     MetricDefinition(
         id="privacy_ai",
@@ -338,6 +354,7 @@ TYPE_SPECIFIC_METRICS: list[MetricDefinition] = [
         rule_fn="evaluate_privacy",
         weight=1.0,
         description="Ensures PII handling, data anonymization, and encryption are addressed for AI data pipelines.",
+        methodology="Checks whether privacy protections are described across the AI data flow, including PII handling, anonymization, and encryption.",
     ),
     MetricDefinition(
         id="robustness",
@@ -351,6 +368,7 @@ TYPE_SPECIFIC_METRICS: list[MetricDefinition] = [
         rule_fn="evaluate_robustness",
         weight=1.0,
         description="Assesses adversarial testing, stress-test metrics, and resilience documentation.",
+        methodology="Verifies that the document explains how the AI system was tested under stress, attack, or failure scenarios and what resilience evidence exists.",
     ),
     MetricDefinition(
         id="regulatory",
@@ -361,6 +379,7 @@ TYPE_SPECIFIC_METRICS: list[MetricDefinition] = [
         rule_fn="evaluate_regulatory",
         weight=1.0,
         description="Identifies adherence to recognized frameworks (NIST AI RMF, EU AI Act, GDPR, ISO).",
+        methodology="Searches for explicit references to recognized regulatory or standards frameworks and checks whether the document ties its controls back to them.",
     ),
 ]
 

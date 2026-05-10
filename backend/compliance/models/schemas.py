@@ -58,6 +58,7 @@ class MetricResult(BaseModel):
     status: str = Field(..., description="Status: good, warning, or critical")
     weight: float = Field(0.0, description="Weight applied in overall scoring")
     reasoning: str = Field("", description="LLM reasoning for this metric")
+    methodology: str = Field("", description="Curated explanation of how the metric is evaluated")
     linked_standards: list[LinkedStandardResponse] = Field(
         default_factory=list,
         description="ISO standards linked to this metric"

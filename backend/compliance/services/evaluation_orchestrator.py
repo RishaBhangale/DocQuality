@@ -239,6 +239,7 @@ class EvaluationOrchestrator:
                 status=status,
                 weight=metric_def.weight,
                 reasoning=metric_reasoning.get(metric_def.id, ""),
+                methodology=metric_def.methodology or metric_def.description,
                 linked_standards=linked_standards,
             )
 
@@ -359,6 +360,7 @@ class EvaluationOrchestrator:
                     "description": m.description,
                     "status_message": m.status_message,
                     "reasoning": m.reasoning,
+                    "methodology": m.methodology,
                 }),
                 linked_standards_json=json.dumps(
                     [ls.model_dump() for ls in m.linked_standards]

@@ -10,13 +10,15 @@ interface MetricCardProps {
   statusMessage: string;
   status: 'good' | 'warning' | 'critical';
   explanation?: string;
+  methodology?: string;
   issueDetails?: string;
   standardsBadge?: string;
   regulationReference?: string;
 }
 
-export function MetricCard({ name, score, description, statusMessage, status, explanation, issueDetails, standardsBadge, regulationReference }: MetricCardProps) {
+export function MetricCard({ name, score, description, statusMessage, status, explanation, methodology, issueDetails, standardsBadge, regulationReference }: MetricCardProps) {
   const [showTooltip, setShowTooltip] = useState(false);
+  const howItWorksText = explanation || methodology || description;
 
   const statusColors = {
     good: 'text-[#16A34A]',
@@ -44,7 +46,7 @@ export function MetricCard({ name, score, description, statusMessage, status, ex
             <div className="flex items-center gap-1.5">
               <h3 className="text-lg font-semibold text-gray-900 group-hover:text-[#1E3A8A] transition-colors">{name}</h3>
               {/* #2 Tooltip */}
-              {explanation && (
+              {howItWorksText && (
                 <div className="relative">
                   <button
                     onMouseEnter={() => setShowTooltip(true)}
@@ -58,7 +60,7 @@ export function MetricCard({ name, score, description, statusMessage, status, ex
                   {showTooltip && (
                     <div className="absolute z-50 left-1/2 -translate-x-1/2 top-7 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl leading-relaxed">
                       <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45" />
-                      {explanation}
+                      {howItWorksText}
                     </div>
                   )}
                 </div>
@@ -154,11 +156,11 @@ export function MetricCard({ name, score, description, statusMessage, status, ex
             )}
 
             {/* How it works */}
-            {explanation && (
+            {howItWorksText && (
               <div className="pt-4 border-t border-gray-100">
                 <h4 className="text-xs font-semibold text-[#1E3A8A] uppercase tracking-wider mb-2">How it works</h4>
                 <p className="text-sm text-gray-600 leading-relaxed">
-                  {explanation}
+                  {howItWorksText}
                 </p>
               </div>
             )}

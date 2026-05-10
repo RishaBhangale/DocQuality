@@ -457,7 +457,7 @@ export function WorkspaceApp({ config }: WorkspaceAppProps) {
                     description={metric.description}
                     statusMessage={metric.status_message}
                     status={metric.status as 'good' | 'warning' | 'critical'}
-                    explanation={metric.reasoning}
+                    explanation={config.workspace === 'compliance' ? (metric.methodology || metric.description) : metric.reasoning}
                     issueDetails={metric.reasoning || metric.status_message}
                     showLinkedStandards={false}
                     accentColor={chartAccent}
@@ -486,7 +486,7 @@ export function WorkspaceApp({ config }: WorkspaceAppProps) {
                       description={metric.description}
                       statusMessage={metric.status_message}
                       status={metric.status as 'good' | 'warning' | 'critical'}
-                      explanation={metric.reasoning}
+                      explanation={config.workspace === 'compliance' ? (metric.methodology || metric.description) : metric.reasoning}
                       issueDetails={metric.reasoning || metric.status_message}
                       standardsBadge={
                         metric.linked_standards?.length
