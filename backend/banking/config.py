@@ -1,0 +1,260 @@
+"""
+Application configuration module.
+
+Loads environment variables and provides centralized configuration
+for all application components.
+"""
+
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
+
+
+_BACKEND_DIR = Path(__file__).resolve().parent.parent
+
+
+def _default_database_url() -> str:
+    db_path = (_BACKEND_DIR / "data" / "banking" / "document_quality.db").resolve()
+    return f"sqlite:///{db_path.as_posix()}"
+
+
+def _normalize_database_url(database_url: str) -> str:
+    if not database_url:
+        return _default_database_url()
+    if not database_url.startswith("sqlite:///"):
+        return database_url
+    if database_url.endswith(":memory:"):
+        return database_url
+
+    relative_path = database_url.removeprefix("sqlite:///")
+    candidate = Path(relative_path)
+    if candidate.is_absolute():
+        return database_url
+
+    resolved_path = (_BACKEND_DIR / candidate).resolve()
+    return f"sqlite:///{resolved_path.as_posix()}"
+
+
+class Settings:
+    """Centralized application settings loaded from environment variables."""
+
+    # Azure Foundry LLM Configuration
+    FOUNDRY_API_KEY: str = os.getenv("FOUNDRY_API_KEY", "")
+    FOUNDRY_ENDPOINT: str = os.getenv("FOUNDRY_ENDPOINT", "")
+    FOUNDRY_MODEL: str = os.getenv("FOUNDRY_MODEL", "")
+    FOUNDRY_API_VERSION: str = os.getenv("FOUNDRY_API_VERSION", "")
+
+    # Database Configuration
+    DATABASE_URL: str = _normalize_database_url(
+        os.getenv("DATABASE_URL", _default_database_url())
+    )
+
+    # Application Configuration
+    APP_HOST: str = os.getenv("APP_HOST", "0.0.0.0")
+    APP_PORT: int = int(os.getenv("APP_PORT", "8000"))
+    MAX_FILE_SIZE_MB: int = int(os.getenv("MAX_FILE_SIZE_MB", "5"))
+    MAX_FILE_SIZE_BYTES: int = MAX_FILE_SIZE_MB * 1024 * 1024
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+
+    # LLM Configuration
+    LLM_TIMEOUT_SECONDS: int = int(os.getenv("LLM_TIMEOUT_SECONDS", "60"))
+    LLM_MAX_RETRIES: int = int(os.getenv("LLM_MAX_RETRIES", "3"))
+    LLM_TEMPERATURE: float = 0.0
+
+    # Supported file types
+    SUPPORTED_FILE_TYPES: list[str] = [".pdf", ".docx", ".png", ".jpg", ".jpeg"]
+
+    # Generic scoring weights (used when no banking domain detected)
+    METRIC_WEIGHTS: dict[str, float] = {
+        "completeness": 0.25,
+        "validity": 0.20,
+        "consistency": 0.20,
+        "accuracy": 0.20,
+        "timeliness": 0.10,
+        "uniqueness": 0.05,
+    }
+
+    # Domain-adaptive scoring weights — override METRIC_WEIGHTS when banking domain detected
+    DOMAIN_SCORING_WEIGHTS: dict[str, dict[str, float]] = {
+        "Customer Onboarding (KYC/AML)": {
+            "completeness": 0.30, "validity": 0.30, "accuracy": 0.20,
+            "consistency": 0.10, "timeliness": 0.05, "uniqueness": 0.05,
+        },
+        "Loan & Credit Documentation": {
+            "completeness": 0.25, "validity": 0.35, "consistency": 0.25,
+            "accuracy": 0.10, "timeliness": 0.03, "uniqueness": 0.02,
+        },
+        "Treasury & Liquidity Reports": {
+            "accuracy": 0.35, "consistency": 0.30, "completeness": 0.20,
+            "validity": 0.10, "timeliness": 0.04, "uniqueness": 0.01,
+        },
+        "Regulatory & Compliance Filings": {
+            "completeness": 0.30, "accuracy": 0.25, "validity": 0.25,
+            "consistency": 0.15, "timeliness": 0.04, "uniqueness": 0.01,
+        },
+        "Investment Banking & M&A": {
+            "accuracy": 0.35, "completeness": 0.25, "consistency": 0.25,
+            "validity": 0.10, "timeliness": 0.04, "uniqueness": 0.01,
+        },
+        "Fraud & Investigation Records": {
+            "completeness": 0.35, "accuracy": 0.30, "consistency": 0.20,
+            "validity": 0.10, "timeliness": 0.04, "uniqueness": 0.01,
+        },
+    }
+
+    # Banking metric weights for S_Bank composite score (per domain)
+    BANKING_METRIC_WEIGHTS: dict[str, dict[str, float]] = {
+        "Customer Onboarding (KYC/AML)": {
+            "Beneficial Ownership Transparency Index (BOTI)": 0.20,
+            "Identity Evidence Strength Score (IESS)": 0.15,
+            "Sanctions/PEP Screening Evidence Coverage (SPEC)": 0.15,
+            "CDD/EDD Trigger Justification Quality (CEDJ)": 0.15,
+            "Source-of-Funds Traceability (SOFT)": 0.15,
+            "Address Verification Strength (AVS)": 0.10,
+            "Risk Rating Explainability (RRE)": 0.10,
+        },
+        "Loan & Credit Documentation": {
+            "Collateral Perfection Index (CPI)": 0.20,
+            "Covenant Compliance Transparency Score (CCTS)": 0.15,
+            "Rate Index & Fallback Correctness (RIFC)": 0.15,
+            "Execution & Authority Completeness (EAC)": 0.15,
+            "Repayment Schedule Integrity (RSI)": 0.15,
+            "Borrower/Guarantor Identification Consistency (BGIC)": 0.10,
+            "Collateral Valuation Recency (CVR)": 0.10,
+        },
+        "Treasury & Liquidity Reports": {
+            "HQLA Eligibility Confidence (HEC)": 0.18,
+            "Inter-System Reconciliation Ratio (ISRR)": 0.16,
+            "Cut-off Time & Timestamp Alignment (CTTA)": 0.14,
+            "Stress Scenario Coverage (SSC)": 0.14,
+            "Inflow/Outflow Classification Completeness (IOCC)": 0.14,
+            "Limit Breach Disclosure Quality (LBDQ)": 0.12,
+            "Source System Coverage (SSCOV)": 0.12,
+        },
+        "Regulatory & Compliance Filings": {
+            "Regulatory Mapping Precision (RMP)": 0.20,
+            "BCBS 239 Data Lineage Integrity (DLI)": 0.20,
+            "Regulatory Change Coverage (RCC)": 0.15,
+            "Disclosure Completeness Score (DCS)": 0.15,
+            "Governance Sign-off Completeness (GSC)": 0.10,
+            "Control Mapping Coverage (CMC)": 0.10,
+            "Recordkeeping & Classification Policy Coverage (RCPC)": 0.10,
+        },
+        "Investment Banking & M&A": {
+            "QoE Normalization Transparency": 0.20,
+            "Fairness Opinion Sensitivity Index (FOSI)": 0.15,
+            "Assumption Transparency Score (ATS)": 0.15,
+            "Sensitivity Analysis Coverage (SAC)": 0.15,
+            "Comparable Set Justification (CSJ)": 0.12,
+            "Conflict & Independence Disclosure Completeness (CIDC)": 0.12,
+            "Data Room Traceability (DRT)": 0.11,
+        },
+        "Fraud & Investigation Records": {
+            "SAR Narrative Actionability Density (SNAD)": 0.20,
+            "Whistleblower Credibility Weight (WCW)": 0.14,
+            "Timeline Coherence Score (TCS)": 0.14,
+            "Evidence Chain-of-Custody Completeness (ECCC)": 0.14,
+            "Transaction Detail Completeness (TDC)": 0.14,
+            "Disposition & Escalation Traceability (DETR)": 0.12,
+            "Regulatory Notification Completeness (RNC)": 0.12,
+        },
+    }
+
+    # Regulatory pass thresholds per metric code
+    BANKING_REGULATORY_THRESHOLDS: dict[str, dict] = {
+        "boti":  {"threshold": 95, "label": "FATF Rec. 10",          "description": "Regulatory pass ≥ 95"},
+        "iess":  {"threshold": 80, "label": "AML5D Art. 13",         "description": "Identity evidence pass ≥ 80"},
+        "spec":  {"threshold": 85, "label": "FATF / Sanctions controls", "description": "Sanctions/PEP evidence pass ≥ 85"},
+        "cedj":  {"threshold": 80, "label": "CDD/EDD governance",    "description": "CDD/EDD rationale pass ≥ 80"},
+        "soft":  {"threshold": 80, "label": "Source-of-funds controls", "description": "SoF traceability pass ≥ 80"},
+        "avs":   {"threshold": 75, "label": "Address verification std.", "description": "Address verification pass ≥ 75"},
+        "rre":   {"threshold": 80, "label": "Risk governance",        "description": "Risk explainability pass ≥ 80"},
+        "cpi":   {"threshold": 100,"label": "OCC Safety & Soundness", "description": "Regulatory pass = 100"},
+        "ccts":  {"threshold": 75, "label": "IFRS 9 / CECL",         "description": "Covenant transparency pass ≥ 75"},
+        "rifc":  {"threshold": 85, "label": "Benchmark reform standards", "description": "Rate fallback correctness pass ≥ 85"},
+        "eac":   {"threshold": 85, "label": "Execution authority policy", "description": "Execution completeness pass ≥ 85"},
+        "rsi":   {"threshold": 80, "label": "Loan servicing standards", "description": "Repayment schedule integrity pass ≥ 80"},
+        "bgic":  {"threshold": 85, "label": "Borrower ID controls",   "description": "Borrower/guarantor consistency pass ≥ 85"},
+        "cvr":   {"threshold": 80, "label": "Collateral valuation policy", "description": "Collateral valuation recency pass ≥ 80"},
+        "hec":   {"threshold": 85, "label": "12 CFR §329.20",        "description": "HQLA eligibility pass ≥ 85"},
+        "isrr":  {"threshold": 98, "label": "BCBS 239 Principle 3",  "description": "Reconciliation pass ≥ 98"},
+        "ctta":  {"threshold": 85, "label": "Liquidity reporting timing", "description": "Cut-off/timestamp alignment pass ≥ 85"},
+        "ssc":   {"threshold": 80, "label": "Liquidity stress testing", "description": "Stress scenario coverage pass ≥ 80"},
+        "iocc":  {"threshold": 80, "label": "LCR/NSFR taxonomy",      "description": "Inflow/outflow classification pass ≥ 80"},
+        "lbdq":  {"threshold": 80, "label": "Limit breach governance", "description": "Limit breach disclosure pass ≥ 80"},
+        "sscov": {"threshold": 85, "label": "Source system controls", "description": "Source system coverage pass ≥ 85"},
+        "rmp":   {"threshold": 90, "label": "EBA RTS compliance",    "description": "Reg. mapping pass ≥ 90"},
+        "dli":   {"threshold": 80, "label": "BCBS 239 Principle 3",  "description": "Data lineage pass ≥ 80"},
+        "rcc":   {"threshold": 80, "label": "Change control std.",    "description": "Regulatory change coverage pass ≥ 80"},
+        "dcs":   {"threshold": 85, "label": "Pillar 3 disclosures",   "description": "Disclosure completeness pass ≥ 85"},
+        "gsc":   {"threshold": 90, "label": "Governance attestation", "description": "Governance sign-off pass ≥ 90"},
+        "cmc":   {"threshold": 80, "label": "Control mapping std.",   "description": "Control mapping pass ≥ 80"},
+        "rcpc":  {"threshold": 80, "label": "Recordkeeping policy",   "description": "Recordkeeping & classification pass ≥ 80"},
+        "qoe":   {"threshold": 75, "label": "AICPA QoE standards",   "description": "QoE transparency pass ≥ 75"},
+        "fosi":  {"threshold": 65, "label": "Delaware fiduciary",    "description": "Fairness opinion pass ≥ 65"},
+        "ats":   {"threshold": 80, "label": "Valuation governance",   "description": "Assumption transparency pass ≥ 80"},
+        "sac":   {"threshold": 80, "label": "Sensitivity standards",  "description": "Sensitivity analysis coverage pass ≥ 80"},
+        "csj":   {"threshold": 75, "label": "Comparable methodology", "description": "Comparable-set justification pass ≥ 75"},
+        "cidc":  {"threshold": 85, "label": "Conflict disclosure rules", "description": "Conflict/independence disclosure pass ≥ 85"},
+        "drt":   {"threshold": 80, "label": "Diligence traceability", "description": "Data room traceability pass ≥ 80"},
+        "snad":  {"threshold": 83, "label": "31 CFR §1020.320",      "description": "SAR completeness pass ≥ 83"},
+        "wcw":   {"threshold": 60, "label": "Internal ethics std.",  "description": "Credibility weight pass ≥ 60"},
+        "tcs":   {"threshold": 80, "label": "Investigation standards", "description": "Timeline coherence pass ≥ 80"},
+        "eccc":  {"threshold": 85, "label": "Evidence handling policy", "description": "Chain-of-custody completeness pass ≥ 85"},
+        "tdc":   {"threshold": 80, "label": "Case documentation standard", "description": "Transaction detail completeness pass ≥ 80"},
+        "detr":  {"threshold": 80, "label": "Escalation governance",  "description": "Disposition traceability pass ≥ 80"},
+        "rnc":   {"threshold": 85, "label": "Regulatory notification rule", "description": "Regulatory notification completeness pass ≥ 85"},
+    }
+
+    # Dependency block rules — metric thresholds that trigger a Legal Hold flag
+    DEPENDENCY_BLOCK_RULES: dict[str, list[dict]] = {
+        "Customer Onboarding (KYC/AML)": [
+            {"metric_code": "boti", "threshold": 50,
+             "message": "Beneficial Ownership incomplete — onboarding pack flagged Legally Invalid"},
+        ],
+        "Loan & Credit Documentation": [
+            {"metric_code": "cpi", "threshold": 80,
+             "message": "Collateral unperfected — loan documents flagged Legally Invalid"},
+        ],
+        "Treasury & Liquidity Reports": [
+            {"metric_code": "isrr", "threshold": 85,
+             "message": "System reconciliation failed — treasury report flagged for mandatory review"},
+        ],
+        "Regulatory & Compliance Filings": [
+            {"metric_code": "rmp", "threshold": 60,
+             "message": "Regulatory mapping insufficient — filing flagged for immediate remediation"},
+              {"metric_code": "dcs", "threshold": 50,
+               "message": "Material disclosures missing — filing flagged for mandatory remediation"},
+              {"metric_code": "gsc", "threshold": 50,
+               "message": "Governance sign-off missing — filing flagged as not approved for submission"},
+        ],
+        "Fraud & Investigation Records": [
+            {"metric_code": "snad", "threshold": 50,
+             "message": "SAR narrative incomplete — report cannot be filed to FinCEN/NCA"},
+        ],
+    }
+
+    # Chunking configuration for large document processing
+    LLM_CHUNK_SIZE: int = int(os.getenv("LLM_CHUNK_SIZE", "6000"))
+    LLM_CHUNK_OVERLAP: int = int(os.getenv("LLM_CHUNK_OVERLAP", "500"))
+    LLM_MAX_CHUNKS: int = int(os.getenv("LLM_MAX_CHUNKS", "5"))
+
+    # Upload directory
+    UPLOAD_DIR: str = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "banking", "uploads")
+
+    @classmethod
+    def validate(cls) -> list[str]:
+        """Validate critical configuration. Returns list of warnings."""
+        warnings = []
+        if not cls.FOUNDRY_API_KEY or cls.FOUNDRY_API_KEY == "your-api-key-here":
+            warnings.append("FOUNDRY_API_KEY is not configured. LLM features will be unavailable.")
+        if not cls.FOUNDRY_ENDPOINT or "your-foundry-endpoint" in cls.FOUNDRY_ENDPOINT:
+            warnings.append("FOUNDRY_ENDPOINT is not configured. LLM features will be unavailable.")
+        return warnings
+
+
+settings = Settings()

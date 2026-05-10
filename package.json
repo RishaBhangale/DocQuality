@@ -1,0 +1,16 @@
+{
+  "name": "docquality-monorepo",
+  "version": "2.0.0",
+  "description": "Unified 2-Command Orchestration for DocQuality",
+  "scripts": {
+    "start:backend": "cd backend && python -m uvicorn main:app --port 8000 --reload",
+    "start:frontend": "cd frontend && npm run dev",
+    "install:backend": "cd backend && pip install -r requirements.txt",
+    "install:frontend": "cd frontend && npm install",
+    "install:all": "npm run install:backend && npm run install:frontend",
+    "start": "npx concurrently \"npm run start:backend\" \"npm run start:frontend\""
+  },
+  "dependencies": {
+    "concurrently": "^8.0.0"
+  }
+}
