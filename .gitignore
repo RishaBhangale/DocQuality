@@ -110,3 +110,6 @@ upload/
 .opencode/
 opencode.json
 AGENTS.md
+
+versions/
+

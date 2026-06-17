@@ -1,0 +1,43 @@
+# ==================================
+# Backend (Python / FastAPI)
+# ==================================
+
+# Environment variables
+.env
+*.env
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Databases
+*.db
+*.db-shm
+*.db-wal
+*.sqlite3
+
+# Local application data
+data/
+uploads/
+
+# Testing & Coverage
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# IDE / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp

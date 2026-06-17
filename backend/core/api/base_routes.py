@@ -186,6 +186,18 @@ def create_base_router(
         db.add(job)
         db.commit()
         
+        # ── Monitor: log upload event ──
+        try:
+            from core.services.monitor_collector import monitor
+            monitor.log_upload(
+                workspace=workspace_name,
+                job_id=job_id,
+                filename=filename,
+                file_size=len(content),
+            )
+        except Exception:
+            pass
+        
         background_tasks.add_task(evaluate_document_job, job_id, file_path, filename)
         
         return JobResponse(

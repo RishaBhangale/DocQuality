@@ -188,8 +188,23 @@ class EvaluationOrchestrator:
         Returns:
             Complete EvaluationResponse.
         """
+        import time as _time
+
+        # ── Monitor: log evaluation start ──
+        try:
+            from core.services.monitor_collector import monitor
+            monitor.log_eval_start(
+                workspace="banking",
+                job_id=job_id,
+                filename=filename,
+                file_size=os.path.getsize(file_path) if os.path.exists(file_path) else 0,
+            )
+        except Exception:
+            pass
+
         # ── Step 1: Extract text + tables ──────────────────────────────────
         self._progress(db, job_id, "Step 1/10: Extracting text and tables from document…")
+        _step_start = _time.time()
         document_text, table_text, ocr_confidence = (
             self.document_service.extract_text_and_tables(file_path)
         )
@@ -200,9 +215,15 @@ class EvaluationOrchestrator:
             )
         combined_text = (document_text + "\n\n" + table_text).strip()
         logger.info("Extracted %d chars of text, %d chars of tables", len(document_text), len(table_text))
+        try:
+            from core.services.monitor_collector import monitor
+            monitor.log_pipeline_step(workspace="banking", step_name="text_extraction", latency_ms=int((_time.time()-_step_start)*1000))
+        except Exception:
+            pass
 
         # ── Step 2: Deterministic scoring engine (full document) ───────────
         self._progress(db, job_id, "Step 2/10: Running deterministic scoring engine…")
+        _step_start = _time.time()
         all_issues: list[IssueSchema] = []
         det_metric_scores: dict[str, float] = {}
 
@@ -260,8 +281,16 @@ class EvaluationOrchestrator:
             "recommendations": det_recommendations,
         }
 
+        try:
+            from core.services.monitor_collector import monitor
+            monitor.log_pipeline_step(workspace="banking", step_name="deterministic_scoring", latency_ms=int((_time.time()-_step_start)*1000))
+        except Exception:
+            pass
+
         # ── Step 3: Classification agent (LLM-only document type) ────────
         self._progress(db, job_id, "Step 3/10: Running classification agent…")
+        _step_start = _time.time()
+        self.llm_service.set_monitor_context(workspace="banking", step="classification")
         classification: dict = {}
         pre_classified_type = ""
         pre_classified_domain: str | None = None
@@ -336,8 +365,16 @@ class EvaluationOrchestrator:
         if banking_domain and self.llm_service.is_configured:
             _specialist_task, _specialist_domain = _launch_specialist_for(banking_domain)
 
+        try:
+            from core.services.monitor_collector import monitor
+            monitor.log_pipeline_step(workspace="banking", step_name="classification", latency_ms=int((_time.time()-_step_start)*1000))
+        except Exception:
+            pass
+
         # ── Step 4: Strict LLM validation/refinement ───────────────────────
         self._progress(db, job_id, "Step 4/10: Running strict LLM quality validation…")
+        _step_start = _time.time()
+        self.llm_service.set_monitor_context(workspace="banking", step="strict_quality")
         strict_llm = None
         llm_raw: str = ""
         llm_metric_reasoning: dict[str, str] = {}
@@ -665,6 +702,8 @@ class EvaluationOrchestrator:
 
         # ── Step 9: Consolidation Agent (recommendations + issues) ─────────
         self._progress(db, job_id, "Step 9/10: Consolidating recommendations and issues…")
+        _step_start = _time.time()
+        self.llm_service.set_monitor_context(workspace="banking", step="consolidation")
         final_recommendations: list[str] = []
         final_issues: list[IssueSchema] = []
 
@@ -689,8 +728,16 @@ class EvaluationOrchestrator:
             final_recommendations = (det_recommendations or []) + (llm_recommendations or [])
             final_issues = all_issues
 
+        try:
+            from core.services.monitor_collector import monitor
+            monitor.log_pipeline_step(workspace="banking", step_name="consolidation", latency_ms=int((_time.time()-_step_start)*1000))
+        except Exception:
+            pass
+
         # ── Step 10: Remediation Agent ─────────────────────────────────────
         self._progress(db, job_id, "Step 10/10: Generating remediation plan…")
+        _step_start = _time.time()
+        self.llm_service.set_monitor_context(workspace="banking", step="remediation")
         remediation_plan: list[dict] = []
         if self.llm_service.is_configured:
             try:
@@ -711,6 +758,12 @@ class EvaluationOrchestrator:
                 )
             except Exception as exc:
                 logger.warning("Remediation agent failed: %s", exc)
+
+        try:
+            from core.services.monitor_collector import monitor
+            monitor.log_pipeline_step(workspace="banking", step_name="remediation", latency_ms=int((_time.time()-_step_start)*1000))
+        except Exception:
+            pass
 
         # ── Finalize & Persist ────────────────────────────────────────────
         self._progress(db, job_id, "Finalizing and saving evaluation results…")
@@ -745,6 +798,18 @@ class EvaluationOrchestrator:
             f"{banking_overall_score:.1f}" if banking_overall_score else "N/A",
             legal_hold,
         )
+
+        # ── Monitor: log evaluation complete ──
+        try:
+            from core.services.monitor_collector import monitor
+            monitor.log_eval_complete(
+                workspace="banking",
+                eval_id=evaluation.id,
+                overall_score=overall_score,
+                domain=banking_domain,
+            )
+        except Exception:
+            pass
 
         return EvaluationResponse(
             evaluation_id=evaluation.id,

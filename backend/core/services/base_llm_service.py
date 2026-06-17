@@ -338,6 +338,17 @@ class BaseLLMService:
         else:
             return {"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}", "api-key": self.api_key}
 
+    # Monitor context: set by orchestrators before LLM calls
+    _monitor_workspace: str = "unknown"
+    _monitor_eval_id: str | None = None
+    _monitor_step: str = ""
+
+    def set_monitor_context(self, workspace: str = "unknown", eval_id: str | None = None, step: str = ""):
+        """Set monitoring context for subsequent LLM calls."""
+        self._monitor_workspace = workspace
+        self._monitor_eval_id = eval_id
+        self._monitor_step = step
+
     def _call_llm(self, prompt: str, system_msg: str = "You are a helpful assistant. Respond with valid JSON only.", max_tokens: int = 4000) -> tuple[dict, str]:
         if not self.is_configured:
             raise RuntimeError("Azure Foundry LLM is not configured.")
@@ -360,7 +371,31 @@ class BaseLLMService:
             try:
                 start_time = time.time()
                 response = requests.post(url, headers=headers, json=payload, timeout=self.timeout)
+                elapsed_ms = int((time.time() - start_time) * 1000)
                 logger.info("LLM response in %.2fs (status: %d)", time.time() - start_time, response.status_code)
+
+                # ── Monitor: emit LLM telemetry ──
+                try:
+                    from core.services.monitor_collector import monitor
+                    usage = {}
+                    if response.status_code == 200:
+                        try:
+                            usage = response.json().get("usage", {})
+                        except Exception:
+                            pass
+                    monitor.log_llm_call(
+                        workspace=self._monitor_workspace,
+                        eval_id=self._monitor_eval_id,
+                        step=self._monitor_step,
+                        model=self.model,
+                        latency_ms=elapsed_ms,
+                        tokens_in=usage.get("prompt_tokens", 0),
+                        tokens_out=usage.get("completion_tokens", 0),
+                        status_code=response.status_code,
+                        error=response.text[:300] if response.status_code != 200 else None,
+                    )
+                except Exception:
+                    pass  # Never let monitoring break the pipeline
 
                 if response.status_code in (401, 404):
                     raise RuntimeError(f"LLM Auth/Endpoint error (HTTP {response.status_code})")
@@ -374,6 +409,20 @@ class BaseLLMService:
 
             except requests.Timeout:
                 last_error = f"LLM timed out after {self.timeout}s"
+                # ── Monitor: log timeout ──
+                try:
+                    from core.services.monitor_collector import monitor
+                    monitor.log_llm_call(
+                        workspace=self._monitor_workspace,
+                        eval_id=self._monitor_eval_id,
+                        step=self._monitor_step,
+                        model=self.model,
+                        latency_ms=self.timeout * 1000,
+                        status_code=0,
+                        error=last_error,
+                    )
+                except Exception:
+                    pass
             except Exception as e:
                 last_error = str(e)
 

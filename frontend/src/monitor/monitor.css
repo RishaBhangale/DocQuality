@@ -1,0 +1,71 @@
+@import 'tailwindcss' source(none);
+@source '../monitor/**/*.{ts,tsx}';
+
+@theme {
+  /* ── Light theme color tokens ── */
+  --color-obsidian: #F0F4FA;
+  --color-card: #FFFFFF;
+  --color-card-hover: #F8FAFF;
+  --color-surface: #EEF2F9;
+  --color-border-subtle: #DDE3EF;
+  --color-border-accent: rgba(37, 99, 235, 0.35);
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #374151;
+  --color-text-muted: #94A3B8;
+  --color-accent-cyan: #2563EB;
+  --color-accent-purple: #7C3AED;
+  --color-accent-green: #16A34A;
+  --color-accent-amber: #D97706;
+  --color-accent-red: #DC2626;
+  --color-accent-pink: #DB2777;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #F0F4FA; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+/* ── Animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.25); }
+  50%       { box-shadow: 0 0 14px 5px rgba(37, 99, 235, 0.08); }
+}
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in   { animation: fadeIn   0.4s ease-out                       forwards; }
+.animate-slide-in  { animation: slideIn  0.3s ease-out                       forwards; }
+.animate-count-up  { animation: countUp  0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-pulse-glow{ animation: pulse-glow 2s ease-in-out infinite; }
+
+/* ── Card ── replaces dark glass-card */
+.glass-card {
+  background: #FFFFFF;
+  border: 1px solid #DDE3EF;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.glass-card:hover {
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.09), 0 2px 6px rgba(15, 23, 42, 0.05);
+  border-color: #C7D2E8;
+}
+
+/* ── Recharts light-mode overrides ── */
+.recharts-cartesian-grid line { stroke: #E8EDF6 !important; }
+.recharts-text { fill: #6B7280 !important; font-size: 11px !important; }
+.recharts-tooltip-wrapper { outline: none !important; }
+.recharts-legend-item-text { color: #374151 !important; }
+.recharts-polar-grid-concentric-polygon { stroke: #E2E8F0 !important; }
+.recharts-polar-grid-concentric-circle  { stroke: #E2E8F0 !important; }

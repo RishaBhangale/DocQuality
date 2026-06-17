@@ -84,6 +84,7 @@ def init_db(engine) -> None:
     """
     # Import models so they register with Base.metadata
     import core.models.db_models  # noqa: F401
+    import core.models.monitor_models  # noqa: F401  — creates monitor_events + monitor_daily_summaries
 
     Base.metadata.create_all(bind=engine)
 

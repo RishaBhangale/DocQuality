@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "dev:monitor": "vite --config vite.monitor.config.ts",
+    "build:monitor": "vite build --config vite.monitor.config.ts"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
